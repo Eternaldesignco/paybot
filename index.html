@@ -2,25 +2,24 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"/>
-  <!-- фиксируем масштаб, чтобы на мобиле не увеличивалось/не прыгало -->
+  <!-- фиксируем масштаб, чтобы на мобиле не зумило -->
   <meta name="viewport"
         content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
   <meta name="format-detection" content="telephone=no,email=no,address=no"/>
   <meta name="color-scheme" content="light"/>
-
   <title>Яхтинг — заявка</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
-    /* === ШРИФТЫ (берём из /fonts) =============================== */
+    /* === ШРИФТЫ (из /fonts) — добавил версию в url, чтобы точно сбросить кэш === */
     @font-face{
       font-family:"BebasCustom";
-      src:url("./fonts/Bebas.ttf") format("truetype");
+      src:url("./fonts/Bebas.ttf?v=2") format("truetype");
       font-weight:400; font-style:normal; font-display:swap;
     }
     @font-face{
       font-family:"RalewayCustom";
-      src:url("./fonts/Raleway-Medium.ttf") format("truetype");
+      src:url("./fonts/Raleway-Medium.ttf?v=2") format("truetype");
       font-weight:500; font-style:normal; font-display:swap;
     }
 
@@ -28,7 +27,7 @@
       --bg:#FFFFFF;      /* фон */
       --text:#231F20;    /* основной текст */
       --accent:#AC1F26;  /* заголовки, рамки, кнопка */
-      --muted:#6B7280;   /* подсказки/плейсхолдеры */
+      --muted:#6B7280;   /* подсказки */
       --radius:14px;
     }
 
@@ -92,7 +91,7 @@
     .btnbar{
       position:sticky; bottom:0; z-index:2;
       padding:12px 16px env(safe-area-inset-bottom,0px);
-      background:#FFFFFF;           /* чисто белый, чтобы не отличался от фона */
+      background:#FFFFFF;           /* белый, как и фон */
       border-top:1px solid var(--accent);
     }
     .btn{
@@ -137,11 +136,11 @@
     const tg = Telegram.WebApp;
     tg.ready();
 
-    /* Подчищаем фон телеги, чтобы низ не был темнее */
+    /* Белый фон у контейнера Телеги, чтобы низ не был «серее» */
     try { tg.setBackgroundColor('#ffffff'); } catch(_) {}
     try { tg.setHeaderColor('#AC1F26'); } catch(_) {}
 
-    /* Прячем системную MainButton, чтобы не было второй */
+    /* Прячем системную MainButton (чтобы не было второй) */
     function hideMB(){
       try{
         tg.MainButton.offClick(()=>{});
@@ -152,14 +151,15 @@
     hideMB(); setTimeout(hideMB,150); setTimeout(hideMB,600);
     tg.onEvent?.("viewportChanged", hideMB); tg.onEvent?.("themeChanged", hideMB);
 
-    /* Блокируем жесты зума на мобиле */
+    /* Блокируем жесты зума (статичность на мобиле) */
     let lastTouchEnd = 0;
     document.addEventListener("touchstart", e => { if (e.touches.length > 1) e.preventDefault(); }, {passive:false});
     document.addEventListener("touchend",   e => { const n=Date.now(); if (n-lastTouchEnd<=300) e.preventDefault(); lastTouchEnd=n; }, {passive:false});
     document.addEventListener("gesturestart", e => e.preventDefault());
 
-    // Подпись "кто вы"
+    // Подпись «кто вы»
     const u = tg.initDataUnsafe?.user;
+    const userId = u?.id || null;
     document.getElementById('who').textContent =
       u ? `Вы: ${u.first_name} ${u.last_name||''} (@${u.username||'—'})`.trim()
         : 'Открыто в Telegram (данные скрыты)';
@@ -191,23 +191,26 @@
         ts:Date.now()
       };
 
-      const qid = tg.initDataUnsafe?.query_id;
-      if (qid){
-        // Режим "кнопка слева" — через backend/answerWebAppQuery
-        try{
-          const r = await fetch(BACKEND_URL,{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({query_id:qid, data:payload})
-          });
-          const t = await r.text().catch(()=> '');
-          if(!r.ok) throw new Error(`HTTP ${r.status}: ${t.slice(0,200)}`);
-          ok('Заявка отправлена ✅'); tg.close();
-        }catch(e){ err(String(e).slice(0,200)); }
-      }else{
-        // запасной вариант для reply-кнопки (если когда-нибудь вернёшь)
-        try{ tg.sendData(JSON.stringify(payload)); ok('Данные отправлены ✅'); tg.close(); }
-        catch{ err('Не удалось отправить через sendData'); }
+      // ВАЖНО: теперь ВСЕГДА стучимся на бэкенд.
+      // Если есть query_id — бэкенд ответит answerWebAppQuery.
+      // Если query_id нет (Main App/кнопка слева) — бэкенд отправит тебе сообщение через sendMessage.
+      const qid = tg.initDataUnsafe?.query_id || null;
+
+      try{
+        const r = await fetch(BACKEND_URL,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            query_id: qid,
+            user_id: userId,
+            data: payload
+          })
+        });
+        const text = await r.text().catch(()=> '');
+        if(!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,200)}`);
+        ok('Заявка отправлена ✅'); tg.close();
+      }catch(e){
+        err(String(e).slice(0,200));
       }
     }
     $sendBtn.addEventListener('click', submitForm);
