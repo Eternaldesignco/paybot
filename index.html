@@ -2,96 +2,28 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"/>
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
   <title>Яхтинг — Эгейское побережье</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
   <style>
-    /* ====== Шрифты (файлы лежат в /fonts) ====== */
-    @font-face {
-      font-family: "BebasMT";
-      src: url("./fonts/Bebas.ttf") format("truetype");
-      font-weight: 700; font-style: normal; font-display: swap;
-    }
-    @font-face {
-      font-family: "Raleway";
-      src: url("./fonts/Raleway-Medium.ttf") format("truetype");
-      font-weight: 400; font-style: normal; font-display: swap;
-    }
+    @font-face { font-family:"BebasMT"; src:url("./fonts/Bebas.ttf") format("truetype"); font-weight:700; font-style:normal; font-display:swap; }
+    @font-face { font-family:"Raleway"; src:url("./fonts/Raleway-Medium.ttf") format("truetype"); font-weight:400; font-style:normal; font-display:swap; }
 
-    /* ====== Цвета по ТЗ ====== */
-    :root{
-      --brand: #AC1F26;     /* шапка, акценты */
-      --text:  #231F20;     /* основной текст */
-      --bg:    #FFFFFF;     /* чистый белый */
-      --border:#AC1F26;     /* рамки полей */
-    }
-
-    /* ====== База / cтабильная вёрстка ====== */
-    *{ box-sizing: border-box; }
-    html, body{ height: 100%; }
-    html, body{
-      margin:0;
-      background: var(--bg) !important; /* принудительно чистый белый */
-      color: var(--text);
-      -webkit-text-size-adjust: 100%;
-      overscroll-behavior: none;
-      font: 16px/1.45 "Raleway", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-
-    header{
-      position: sticky; top: 0; z-index: 1;
-      background: var(--brand); color:#fff;
-      padding: 14px 18px;
-    }
-    .brand{
-      display:flex; flex-direction:column; gap:4px;
-    }
-    .brand__title{
-      font-family: "BebasMT", sans-serif;
-      letter-spacing: .5px;
-      font-size: clamp(22px, 4.6vw, 32px);
-      line-height: 1;
-      margin:0;
-    }
-    .brand__sub{
-      opacity:.92; margin:0;
-      font-size: clamp(12px, 2.5vw, 14px);
-    }
-
-    .container{ max-width: 720px; margin:0 auto; padding: 16px; }
-    h2{
-      font-family: "BebasMT", sans-serif;
-      color: var(--brand);
-      font-size: clamp(22px,5.2vw,34px);
-      margin: 8px 0 12px;
-      letter-spacing:.3px;
-    }
-    .hint{ opacity:.7; font-size: 13px; margin:6px 0 14px; }
-
-    label{ display:block; margin: 12px 0 6px; }
-    input, textarea{
-      width: 100%;
-      background: #fff;
-      color: var(--text);
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      outline: none;
-    }
-    textarea{ min-height: 120px; resize: vertical; }
-
-    input:focus, textarea:focus{
-      box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand), #fff 80%);
-    }
-
-    /* чтобы MainButton не перекрывал форму */
-    .pb{
-      height: calc(env(safe-area-inset-bottom, 0px) + 96px);
-    }
+    :root{ --brand:#AC1F26; --text:#231F20; --bg:#FFFFFF; --border:#AC1F26; }
+    *{box-sizing:border-box} html,body{height:100%}
+    html,body{margin:0;background:#FFFFFF!important;color:var(--text);-webkit-text-size-adjust:100%;overscroll-behavior:none;font:16px/1.45 "Raleway",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    header{position:sticky;top:0;z-index:1;background:var(--brand);color:#fff;padding:14px 18px}
+    .brand{display:flex;flex-direction:column;gap:4px}
+    .brand__title{font-family:"BebasMT",sans-serif;letter-spacing:.5px;font-size:clamp(22px,4.6vw,32px);line-height:1;margin:0}
+    .brand__sub{opacity:.92;margin:0;font-size:clamp(12px,2.5vw,14px)}
+    .container{max-width:720px;margin:0 auto;padding:16px}
+    h2{font-family:"BebasMT",sans-serif;color:var(--brand);font-size:clamp(22px,5.2vw,34px);margin:8px 0 12px;letter-spacing:.3px}
+    .hint{opacity:.7;font-size:13px;margin:6px 0 14px}
+    label{display:block;margin:12px 0 6px}
+    input,textarea{width:100%;background:#fff;color:var(--text);padding:12px 14px;border-radius:12px;border:1px solid var(--border);outline:none}
+    textarea{min-height:120px;resize:vertical}
+    input:focus,textarea:focus{box-shadow:0 0 0 3px color-mix(in oklab, var(--brand), #fff 80%)}
+    .pb{height:calc(env(safe-area-inset-bottom,0px) + 96px)}
   </style>
 </head>
 <body>
@@ -118,18 +50,14 @@
     <p class="hint">Нажмите «Отправить заявку» внизу.</p>
   </div>
 
-  <!-- отступ, чтобы кнопка Телеги не перекрывала поля -->
   <div class="pb"></div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
-
-    // Белый фон принудительно, чтобы не было "темнее/светлее"
     document.documentElement.style.background = '#FFFFFF';
     document.body.style.background = '#FFFFFF';
 
-    // Заполним подпись "Кто вы"
     const u = tg.initDataUnsafe?.user;
     const who = document.getElementById('who');
     if (u) {
@@ -139,12 +67,10 @@
       who.textContent = 'Открыто вне Telegram (данных о пользователе нет)';
     }
 
-    // Поля
-    const $name    = document.getElementById('name');
+    const $name = document.getElementById('name');
     const $contact = document.getElementById('contact');
     const $comment = document.getElementById('comment');
 
-    // Telegram Main Button — единственная кнопка отправки
     tg.MainButton.setText('Отправить заявку');
     tg.MainButton.color = '#AC1F26';
     tg.MainButton.textColor = '#FFFFFF';
@@ -155,52 +81,42 @@
       const ok = $name.value.trim().length >= 2 && $contact.value.trim().length >= 3;
       if (ok) tg.MainButton.enable(); else tg.MainButton.disable();
     }
-    [$name, $contact, $comment].forEach(n => n.addEventListener('input', validate));
+    [$name,$contact,$comment].forEach(n=>n.addEventListener('input',validate));
     validate();
 
-    // === Отправка ===
-    const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit"; // твой Render
+    const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit";
+    const HEALTH = "https://miniapp-backend-q7w0.onrender.com/health";
+
+    // прогреем Render, чтобы исключить «сон»
+    fetch(HEALTH, {mode:'cors'}).catch(()=>{});
 
     tg.MainButton.onClick(async () => {
       const payload = {
-        event: 'lead',
-        name: $name.value.trim(),
-        contact: $contact.value.trim(),
-        comment: $comment.value.trim(),
-        ts: Date.now()
+        event:'lead',
+        name:$name.value.trim(),
+        contact:$contact.value.trim(),
+        comment:$comment.value.trim(),
+        ts:Date.now()
       };
-
       const queryId = tg.initDataUnsafe?.query_id;
-      try {
-        // 1) основной путь: query_id есть → сервер вызовет answerWebAppQuery
-        if (queryId) {
-          const r = await fetch(BACKEND_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query_id: queryId, data: payload })
-          });
-          if (!r.ok) throw new Error('HTTP '+r.status);
-          tg.showPopup({title:'Готово', message:'Заявка отправлена ✅'});
-          tg.close();
-          return;
-        }
 
-        // 2) запасной путь (если вдруг открылось без query_id) — отправим через user_id
-        // ВНИМАНИЕ: для этого на сервере должен быть указан человеческий user_id (см. app.py).
-        if (u?.id) {
-          const r = await fetch(BACKEND_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query_id: "", user_id: u.id, data: payload })
-          });
-          if (!r.ok) throw new Error('HTTP '+r.status);
-          tg.showPopup({title:'Готово', message:'Заявка отправлена ✅'});
-          tg.close();
-        } else {
-          tg.showPopup({title:'Ошибка', message:'Нет query_id. Откройте Mini App через кнопку слева у бота.'});
-        }
+      try {
+        const body = queryId
+          ? { query_id: queryId, data: payload }
+          : { query_id: "", user_id: u?.id || 0, data: payload }; // фолбэк
+
+        const r = await fetch(BACKEND_URL, {
+          method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          keepalive: true
+        });
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        tg.showPopup({title:'Готово', message:'Заявка отправлена ✅'});
+        tg.close();
       } catch (e) {
-        tg.showPopup({title:'Ошибка', message: 'Не удалось отправить. '+e});
+        tg.showPopup({title:'Ошибка', message:'Не удалось отправить. '+e});
       }
     });
   </script>
