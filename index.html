@@ -97,7 +97,7 @@
     // === ОТПРАВКА ===
     // 1) если открыт через кнопку слева/в профиле — используем backend (answerWebAppQuery)
     // 2) если когда-нибудь откроешь через reply-кнопку — tg.sendData тоже будет работать
-    const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com"; // <— ПОДСТАВЬ свой https-адрес после деплоя
+    const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit"; // <— ПОДСТАВЬ свой https-адрес после деплоя
 
     tg.MainButton.onClick(async () => {
       const payload = {
