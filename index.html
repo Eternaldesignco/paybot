@@ -6,25 +6,53 @@
   <title>MarkeTraveller — заявка</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    :root{
+      --bg:#ffffff;      /* фон */
+      --text:#231F20;    /* основной текст */
+      --accent:#AC1F26;  /* заголовки, кнопки, граф. элементы */
+      --muted:#6B7280;   /* подсказки/плейсхолдеры */
+      --border:#AC1F26;  /* обводки */
+    }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      color:var(--tg-theme-text-color);
-      background:var(--tg-theme-bg-color);
+      color:var(--text);
+      background:var(--bg);
       -webkit-text-size-adjust:100%;
       overflow-x:hidden; touch-action:manipulation;
     }
-    header{position:sticky;top:0;z-index:3;background:#ac1f26;color:#fff;padding:14px 18px;font-weight:700;font-size:clamp(18px,2.5vw,22px)}
+    header{
+      position:sticky;top:0;z-index:3;
+      background:var(--accent);color:#fff;padding:14px 18px;
+      font-weight:700;font-size:clamp(18px,2.5vw,22px)
+    }
     .container{max-width:720px;margin:0 auto;padding:16px}
-    h2{margin:6px 0 8px;font-size:clamp(18px,3.5vw,24px)}
-    label{display:block;margin:12px 0 6px;opacity:.9}
-    input,textarea{width:100%;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--tg-theme-hint-color);background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);outline:0}
-    textarea{min-height:100px;resize:vertical}
-    .hint{opacity:.7;font-size:13px;margin-top:6px}
-    .btnbar{position:sticky;bottom:0;z-index:2;padding:12px 16px env(safe-area-inset-bottom,0px);background:linear-gradient(180deg,rgba(0,0,0,.0),rgba(0,0,0,.04)),var(--tg-theme-bg-color);border-top:1px solid var(--tg-theme-hint-color)}
-    .btn{width:100%;display:inline-block;text-align:center;padding:14px 16px;border-radius:14px;border:0;cursor:pointer;background:#4c86e8;color:#fff;font-weight:700;font-size:16px}
+    h2{margin:6px 0 8px;font-size:clamp(18px,3.5vw,26px);color:var(--accent)}
+    label{display:block;margin:12px 0 6px;color:var(--accent);font-weight:600}
+    input,textarea{
+      width:100%;min-width:0;padding:12px 14px;border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;color:var(--text);outline:0
+    }
+    input::placeholder, textarea::placeholder{color:var(--muted)}
+    textarea{min-height:110px;resize:vertical}
+    .hint{color:var(--muted);font-size:13px;margin-top:6px}
+
+    /* наша единственная кнопка */
+    .btnbar{
+      position:sticky;bottom:0;z-index:2;
+      padding:12px 16px env(safe-area-inset-bottom,0px);
+      background:linear-gradient(180deg,rgba(0,0,0,.0),rgba(0,0,0,.04)),var(--bg);
+      border-top:1px solid var(--border);
+    }
+    .btn{
+      width:100%;display:inline-block;text-align:center;
+      padding:14px 16px;border-radius:14px;border:0;cursor:pointer;
+      background:var(--accent);color:#fff;font-weight:800;font-size:16px;
+      letter-spacing:.2px
+    }
     .btn[disabled]{opacity:.5;cursor:not-allowed}
   </style>
 </head>
@@ -47,7 +75,7 @@
     <p class="hint">Нажмите «Отправить заявку» внизу.</p>
   </div>
 
-  <!-- ОДНА кнопка (наша) -->
+  <!-- ОДНА кнопка -->
   <div class="btnbar">
     <button id="sendBtn" class="btn" disabled>Отправить заявку</button>
   </div>
@@ -56,8 +84,20 @@
     const tg = Telegram.WebApp;
     tg.ready();
 
-    // Прячем системную MainButton — оставляем только нашу кнопку
-    try { tg.MainButton.hide(); } catch(_) {}
+    // Жестко скрываем системную MainButton, чтобы не было второй
+    function forceHideMainButton(){
+      try{
+        tg.MainButton.offClick(()=>{});
+        tg.MainButton.setParams({text:"", is_visible:false, is_enabled:false});
+        tg.MainButton.hide();
+      }catch(_){}
+    }
+    forceHideMainButton();
+    // На некоторых клиентах её может «поднимать» при событиях — дожимаем:
+    setTimeout(forceHideMainButton, 150);
+    setTimeout(forceHideMainButton, 600);
+    tg.onEvent?.("themeChanged", forceHideMainButton);
+    tg.onEvent?.("viewportChanged", forceHideMainButton);
 
     // Кто открыл
     const u = tg.initDataUnsafe?.user;
@@ -75,7 +115,7 @@
     function sync(){ $sendBtn.disabled = !canSend(); }
     [$name,$contact,$comment].forEach(i=>i.addEventListener('input', sync)); sync();
 
-    // Адрес бэкенда
+    // Бэкенд
     const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit";
 
     function ok(msg){ try{ tg.showPopup({title:'Готово', message:msg}); }catch(_){ alert(msg); } }
@@ -92,9 +132,8 @@
         ts:Date.now()
       };
 
-      const queryId = tg.initDataUnsafe?.query_id; // есть не всегда
+      const queryId = tg.initDataUnsafe?.query_id; // если есть — уйдём через backend
       if (queryId){
-        // Есть query_id → отвечаем через backend (answerWebAppQuery)
         try{
           const r = await fetch(BACKEND_URL,{
             method:'POST',
@@ -106,7 +145,7 @@
           ok('Заявка отправлена ✅'); tg.close();
         }catch(e){ err(String(e).slice(0,200)); }
       }else{
-        // Нет query_id (часто на телефонах через меню) → отправляем в чат через sendData
+        // если query_id нет (бывает на мобилках) — fallback в чат
         try{
           tg.sendData(JSON.stringify(payload));
           ok('Данные отправлены ✅'); tg.close();
