@@ -2,62 +2,82 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>MarkeTraveller — заявка</title>
+  <!-- Статичная мобильная вёрстка: отключаем масштабирование -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+  <meta name="format-detection" content="telephone=no,email=no,address=no"/>
+  <title>Яхтинг — заявка</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <style>
     :root{
-      --bg:#ffffff;      /* фон */
+      --bg:#FFFFFF;      /* фон */
       --text:#231F20;    /* основной текст */
-      --accent:#AC1F26;  /* заголовки, кнопки, граф. элементы */
+      --accent:#AC1F26;  /* заголовки, кнопка, обводки */
       --muted:#6B7280;   /* подсказки/плейсхолдеры */
-      --border:#AC1F26;  /* обводки */
+      --border:#AC1F26;  /* рамки полей и верхняя граница панели кнопки */
+      --radius:14px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
+    html,body{background:var(--bg)!important}
     body{
       margin:0;
       font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial;
       color:var(--text);
-      background:var(--bg);
+      /* убираем «подзум» и дабл-тап-зум */
       -webkit-text-size-adjust:100%;
-      overflow-x:hidden; touch-action:manipulation;
+      text-size-adjust:100%;
+      overflow-x:hidden;
+      touch-action:manipulation;
     }
-    header{
-      position:sticky;top:0;z-index:3;
-      background:var(--accent);color:#fff;padding:14px 18px;
-      font-weight:700;font-size:clamp(18px,2.5vw,22px)
+
+    /* Шапка */
+    .appbar{
+      position:sticky; top:0; z-index:3;
+      background:var(--accent); color:#fff;
+      padding:14px 18px;
     }
-    .container{max-width:720px;margin:0 auto;padding:16px}
-    h2{margin:6px 0 8px;font-size:clamp(18px,3.5vw,26px);color:var(--accent)}
-    label{display:block;margin:12px 0 6px;color:var(--accent);font-weight:600}
+    .brand{font-weight:800; font-size:20px; letter-spacing:.2px}
+    .subtitle{opacity:.9; margin-top:4px; font-size:14px; font-weight:600}
+
+    .container{max-width:720px; margin:0 auto; padding:16px; background:var(--bg)}
+    h2{margin:6px 0 8px; font-size:24px; color:var(--accent)}
+    label{display:block; margin:12px 0 6px; color:var(--accent); font-weight:700}
     input,textarea{
-      width:100%;min-width:0;padding:12px 14px;border-radius:12px;
+      width:100%; min-width:0;
+      padding:12px 14px; border-radius:var(--radius);
       border:1px solid var(--border);
-      background:#fff;color:var(--text);outline:0
+      background:#FFFFFF; color:var(--text); outline:0;
+      font-size:16px; /* >=16px — чтобы iOS не увеличивал масштаб */
     }
     input::placeholder, textarea::placeholder{color:var(--muted)}
-    textarea{min-height:110px;resize:vertical}
-    .hint{color:var(--muted);font-size:13px;margin-top:6px}
+    textarea{min-height:110px; resize:vertical}
+    .hint{color:var(--muted); font-size:13px; margin-top:6px}
 
-    /* наша единственная кнопка */
+    /* ОДНА кнопка отправки */
     .btnbar{
-      position:sticky;bottom:0;z-index:2;
+      position:sticky; bottom:0; z-index:2;
       padding:12px 16px env(safe-area-inset-bottom,0px);
-      background:linear-gradient(180deg,rgba(0,0,0,.0),rgba(0,0,0,.04)),var(--bg);
+      background:var(--bg);              /* без градиентов — чистый #fff */
       border-top:1px solid var(--border);
     }
     .btn{
-      width:100%;display:inline-block;text-align:center;
-      padding:14px 16px;border-radius:14px;border:0;cursor:pointer;
-      background:var(--accent);color:#fff;font-weight:800;font-size:16px;
-      letter-spacing:.2px
+      width:100%; display:inline-block; text-align:center;
+      padding:14px 16px; border-radius:var(--radius); border:0; cursor:pointer;
+      background:var(--accent); color:#fff; font-weight:800; font-size:16px;
+      letter-spacing:.2px;
     }
-    .btn[disabled]{opacity:.5;cursor:not-allowed}
+    .btn[disabled]{opacity:.5; cursor:not-allowed}
+    .btn:active{transform:translateY(1px)}
   </style>
 </head>
 <body>
-  <header>MarkeTraveller</header>
+  <!-- Шапка -->
+  <header class="appbar">
+    <div class="brand">Яхтинг</div>
+    <div class="subtitle">В Турции, по Эгейскому побережью</div>
+  </header>
 
   <div class="container">
     <h2>Заявка на подбор тура</h2>
@@ -84,20 +104,28 @@
     const tg = Telegram.WebApp;
     tg.ready();
 
-    // Жестко скрываем системную MainButton, чтобы не было второй
-    function forceHideMainButton(){
+    /* Жёстко прячем системную MainButton, чтобы не было второй */
+    function hideMB(){
       try{
         tg.MainButton.offClick(()=>{});
-        tg.MainButton.setParams({text:"", is_visible:false, is_enabled:false});
+        tg.MainButton.setParams({text:"",is_visible:false,is_enabled:false});
         tg.MainButton.hide();
       }catch(_){}
     }
-    forceHideMainButton();
-    // На некоторых клиентах её может «поднимать» при событиях — дожимаем:
-    setTimeout(forceHideMainButton, 150);
-    setTimeout(forceHideMainButton, 600);
-    tg.onEvent?.("themeChanged", forceHideMainButton);
-    tg.onEvent?.("viewportChanged", forceHideMainButton);
+    hideMB(); setTimeout(hideMB,150); setTimeout(hideMB,600);
+    tg.onEvent?.("viewportChanged", hideMB); tg.onEvent?.("themeChanged", hideMB);
+
+    /* Блокируем пинч-зум и дабл-тап-зум (iOS/Android) */
+    let lastTouchEnd = 0;
+    document.addEventListener("touchstart", e => {
+      if (e.touches.length > 1) e.preventDefault();
+    }, {passive:false});
+    document.addEventListener("touchend", e => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, {passive:false});
+    document.addEventListener("gesturestart", e => e.preventDefault());
 
     // Кто открыл
     const u = tg.initDataUnsafe?.user;
@@ -115,7 +143,7 @@
     function sync(){ $sendBtn.disabled = !canSend(); }
     [$name,$contact,$comment].forEach(i=>i.addEventListener('input', sync)); sync();
 
-    // Бэкенд
+    // Бэкенд (Render)
     const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit";
 
     function ok(msg){ try{ tg.showPopup({title:'Готово', message:msg}); }catch(_){ alert(msg); } }
@@ -132,27 +160,23 @@
         ts:Date.now()
       };
 
-      const queryId = tg.initDataUnsafe?.query_id; // если есть — уйдём через backend
-      if (queryId){
+      const qid = tg.initDataUnsafe?.query_id;
+      if (qid){
         try{
           const r = await fetch(BACKEND_URL,{
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({query_id:queryId, data:payload})
+            body: JSON.stringify({query_id:qid, data:payload})
           });
           const t = await r.text().catch(()=> '');
           if(!r.ok) throw new Error(`HTTP ${r.status}: ${t.slice(0,200)}`);
           ok('Заявка отправлена ✅'); tg.close();
         }catch(e){ err(String(e).slice(0,200)); }
       }else{
-        // если query_id нет (бывает на мобилках) — fallback в чат
-        try{
-          tg.sendData(JSON.stringify(payload));
-          ok('Данные отправлены ✅'); tg.close();
-        }catch(e){ err('Не удалось отправить через sendData'); }
+        try{ tg.sendData(JSON.stringify(payload)); ok('Данные отправлены ✅'); tg.close(); }
+        catch{ err('Не удалось отправить через sendData'); }
       }
     }
-
     $sendBtn.addEventListener('click', submitForm);
   </script>
 </body>
