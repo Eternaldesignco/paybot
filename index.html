@@ -49,4 +49,72 @@
 
   <!-- ОДНА кнопка (наша) -->
   <div class="btnbar">
-    <button
+    <button id="sendBtn" class="btn" disabled>Отправить заявку</button>
+  </div>
+
+  <script>
+    const tg = Telegram.WebApp;
+    tg.ready();
+
+    // Прячем системную MainButton — оставляем только нашу кнопку
+    try { tg.MainButton.hide(); } catch(_) {}
+
+    // Кто открыл
+    const u = tg.initDataUnsafe?.user;
+    document.getElementById('who').textContent =
+      u ? `Вы: ${u.first_name} ${u.last_name||''} (@${u.username||'—'})`.trim()
+        : 'Открыто в Telegram (данные скрыты)';
+
+    // Поля
+    const $name = document.getElementById('name');
+    const $contact = document.getElementById('contact');
+    const $comment = document.getElementById('comment');
+    const $sendBtn = document.getElementById('sendBtn');
+
+    function canSend(){ return $name.value.trim().length>=2 && $contact.value.trim().length>=3; }
+    function sync(){ $sendBtn.disabled = !canSend(); }
+    [$name,$contact,$comment].forEach(i=>i.addEventListener('input', sync)); sync();
+
+    // Адрес бэкенда
+    const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit";
+
+    function ok(msg){ try{ tg.showPopup({title:'Готово', message:msg}); }catch(_){ alert(msg); } }
+    function err(msg){ try{ tg.showPopup({title:'Ошибка', message:msg}); }catch(_){ alert(msg); } }
+
+    async function submitForm(){
+      if (!canSend()) return;
+
+      const payload = {
+        event:'lead',
+        name:$name.value.trim(),
+        contact:$contact.value.trim(),
+        comment:$comment.value.trim(),
+        ts:Date.now()
+      };
+
+      const queryId = tg.initDataUnsafe?.query_id; // есть не всегда
+      if (queryId){
+        // Есть query_id → отвечаем через backend (answerWebAppQuery)
+        try{
+          const r = await fetch(BACKEND_URL,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({query_id:queryId, data:payload})
+          });
+          const t = await r.text().catch(()=> '');
+          if(!r.ok) throw new Error(`HTTP ${r.status}: ${t.slice(0,200)}`);
+          ok('Заявка отправлена ✅'); tg.close();
+        }catch(e){ err(String(e).slice(0,200)); }
+      }else{
+        // Нет query_id (часто на телефонах через меню) → отправляем в чат через sendData
+        try{
+          tg.sendData(JSON.stringify(payload));
+          ok('Данные отправлены ✅'); tg.close();
+        }catch(e){ err('Не удалось отправить через sendData'); }
+      }
+    }
+
+    $sendBtn.addEventListener('click', submitForm);
+  </script>
+</body>
+</html>
