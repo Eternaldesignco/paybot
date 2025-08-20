@@ -6,7 +6,6 @@
   <title>MarkeTraveller — заявка</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* ===== Стабильная верстка на всех экранах ===== */
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
@@ -15,7 +14,7 @@
       color: var(--tg-theme-text-color);
       background: var(--tg-theme-bg-color);
       -webkit-text-size-adjust: 100%;
-      overflow-x: hidden;                 /* убираем горизонтальный скролл */
+      overflow-x: hidden;
       touch-action: manipulation;
     }
     header {
@@ -36,9 +35,7 @@
     }
     textarea { min-height: 100px; resize: vertical; }
     .hint { opacity:.7; font-size: 13px; margin-top: 6px; }
-    footer {
-      height: calc(env(safe-area-inset-bottom, 0px));
-    }
+    footer { height: calc(env(safe-area-inset-bottom, 0px)); }
   </style>
 </head>
 <body>
@@ -66,12 +63,10 @@
     const tg = window.Telegram.WebApp;
     tg.ready();
 
-    // На десктопе иногда крашится из-за resize — не форсим expand.
-    if (!tg.isVersionAtLeast?.(7, 0)) {
-      try { tg.expand(); } catch(_) {}
-    }
+    // Не форсим expand на свежих версиях Desktop (иногда падает)
+    if (!tg.isVersionAtLeast?.(7, 0)) { try { tg.expand(); } catch(_) {} }
 
-    // Плейсхолдер с именем
+    // Кто открыл
     const u = tg.initDataUnsafe?.user;
     document.getElementById('who').textContent =
       u ? `Вы: ${u.first_name} ${u.last_name||''} (@${u.username||'—'})`.trim()
@@ -82,7 +77,7 @@
     const $contact = document.getElementById('contact');
     const $comment = document.getElementById('comment');
 
-    // Покажем Главную кнопку Telegram
+    // Главная кнопка Telegram
     tg.MainButton.setText('Отправить заявку');
     tg.MainButton.show();
     tg.MainButton.disable();
@@ -94,10 +89,15 @@
     [$name, $contact, $comment].forEach(i => i.addEventListener('input', validate));
     validate();
 
-    // === ОТПРАВКА ===
-    // 1) если открыт через кнопку слева/в профиле — используем backend (answerWebAppQuery)
-    // 2) если когда-нибудь откроешь через reply-кнопку — tg.sendData тоже будет работать
-    const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit"; // <— ПОДСТАВЬ свой https-адрес после деплоя
+    // === BACKEND ===
+    const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit"; // свой URL
+
+    function showError(msg){
+      try { tg.showPopup({title:"Ошибка", message: msg}); } catch(_) { alert(msg); }
+    }
+    function showOk(msg){
+      try { tg.showPopup({title:"Готово", message: msg}); } catch(_) { alert(msg); }
+    }
 
     tg.MainButton.onClick(async () => {
       const payload = {
@@ -108,27 +108,15 @@
         ts: Date.now()
       };
 
-      const queryId = tg.initDataUnsafe?.query_id;
+      const queryId = tg.initDataUnsafe?.query_id; // есть при запуске из меню/профиля/директ
       if (queryId) {
-        // Кнопка слева / Main App / Direct Link
         try {
           const r = await fetch(BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ query_id: queryId, data: payload })
           });
-          if (!r.ok) throw new Error('HTTP '+r.status);
-          try { tg.showPopup({title:'Готово', message:'Заявка отправлена ✅'}); } catch(_) {}
+          const text = await r.text().catch(()=> "");
+          if (!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,200)}`);
+          showOk('Заявка отправлена ✅');
           tg.close();
-        } catch (e) {
-          try { tg.showPopup({title:'Ошибка', message:'Не удалось отправить. Попробуйте ещё раз.'}); } catch(_) {}
-        }
-      } else {
-        // Открыто через reply-кнопку (если вернешь её)
-        tg.sendData(JSON.stringify(payload));
-        try { tg.showPopup({title:'Отправлено', message:'Данные ушли боту ✅'}); } catch(_) {}
-      }
-    });
-  </script>
-</body>
-</html>
