@@ -2,26 +2,49 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Mar keTraveller — заявка</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>MarkeTraveller — заявка</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    :root{--pad:16px}
-    body{margin:0;background:var(--tg-theme-bg-color);color:var(--tg-theme-text-color);
-         font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    header{background:#ac1f26;color:#fff;padding:16px 18px;font-weight:700;font-size:22px}
-    .wrap{padding:var(--pad);max-width:640px;margin:0 auto}
-    label{display:block;margin:12px 0 6px;opacity:.85}
-    input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--tg-theme-hint-color);
-                   background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color)}
-    textarea{min-height:96px;resize:vertical}
-    .hint{opacity:.7;font-size:13px;margin-top:6px}
+    /* ===== Стабильная верстка на всех экранах ===== */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font: 16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color: var(--tg-theme-text-color);
+      background: var(--tg-theme-bg-color);
+      -webkit-text-size-adjust: 100%;
+      overflow-x: hidden;                 /* убираем горизонтальный скролл */
+      touch-action: manipulation;
+    }
+    header {
+      position: sticky; top: 0; z-index: 2;
+      background: #ac1f26; color: #fff; padding: 14px 18px;
+      font-weight: 700; font-size: clamp(18px, 2.5vw, 22px);
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 16px; }
+    h2 { margin: 6px 0 8px; font-size: clamp(18px, 3.5vw, 24px); }
+    label { display:block; margin: 12px 0 6px; opacity:.9 }
+    input, textarea {
+      width: 100%; min-width: 0;
+      padding: 12px 14px; border-radius: 12px;
+      border: 1px solid var(--tg-theme-hint-color);
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-text-color);
+      outline: none;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    .hint { opacity:.7; font-size: 13px; margin-top: 6px; }
+    footer {
+      height: calc(env(safe-area-inset-bottom, 0px));
+    }
   </style>
 </head>
 <body>
   <header>MarkeTraveller</header>
 
-  <div class="wrap">
+  <div class="container">
     <h2>Заявка на подбор тура</h2>
     <p id="who" class="hint">Загружаю…</p>
 
@@ -34,61 +57,77 @@
     <label>Комментарий</label>
     <textarea id="comment" placeholder="Куда, когда, бюджет и пожелания"></textarea>
 
-    <p class="hint">Нажмите «Отправить» внизу.</p>
-    <button id="send" style="display:none"></button> <!-- нужен для привязки onClick, но не показываем -->
+    <p class="hint">Нажмите «Отправить заявку» внизу.</p>
   </div>
+
+  <footer></footer>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
-    // tg.expand(); // если на Desktop падал — оставь закомментированным
 
-    // Кто открыл
+    // На десктопе иногда крашится из-за resize — не форсим expand.
+    if (!tg.isVersionAtLeast?.(7, 0)) {
+      try { tg.expand(); } catch(_) {}
+    }
+
+    // Плейсхолдер с именем
     const u = tg.initDataUnsafe?.user;
-    document.getElementById('who').textContent = u
-      ? `Вы: ${u.first_name} ${u.last_name||''} (@${u.username||'—'})`.trim()
-      : 'Открыто вне Telegram';
+    document.getElementById('who').textContent =
+      u ? `Вы: ${u.first_name} ${u.last_name||''} (@${u.username||'—'})`.trim()
+        : 'Открыто вне Telegram (без данных пользователя)';
 
-    const nameEl = document.getElementById('name');
-    const contactEl = document.getElementById('contact');
-    const commentEl = document.getElementById('comment');
+    // Поля
+    const $name = document.getElementById('name');
+    const $contact = document.getElementById('contact');
+    const $comment = document.getElementById('comment');
 
-    // ===== Главная кнопка Telegram (показываем ЯВНО) =====
+    // Покажем Главную кнопку Telegram
     tg.MainButton.setText('Отправить заявку');
-    tg.MainButton.show();            // <<< это делает кнопку видимой
-    tg.MainButton.disable();         // включим после валидации
+    tg.MainButton.show();
+    tg.MainButton.disable();
 
     function validate(){
-      const ok = nameEl.value.trim().length>=2 && contactEl.value.trim().length>=3;
-      if(ok) tg.MainButton.enable(); else tg.MainButton.disable();
+      const ok = $name.value.trim().length >= 2 && $contact.value.trim().length >= 3;
+      if (ok) tg.MainButton.enable(); else tg.MainButton.disable();
     }
-    [nameEl,contactEl,commentEl].forEach(i=>i.addEventListener('input', validate));
+    [$name, $contact, $comment].forEach(i => i.addEventListener('input', validate));
     validate();
 
-    // ===== Отправка =====
-    function send(payload){
-      const qid = tg.initDataUnsafe?.query_id; // есть при запуске из меню/профиля/директ-линка
-      if (qid) {
-        // Сценарий «кнопка слева» — сейчас просто покажем подтверждение и закроем апп.
-        // (Доставку в чат сделаем позже через маленький сервер — это нужно для Menu Button).
-        try { tg.showPopup({title:'Готово', message:'Заявка отправлена ✅'}); } catch(e){}
-        tg.close();
-      } else {
-        // Сценарий «кнопка снизу» (если когда-нибудь вернёшь) — шлём напрямую боту
-        tg.sendData(JSON.stringify(payload));
-        try { tg.showPopup({title:'Отправлено', message:'Данные ушли боту ✅'}); } catch(e){}
-      }
-    }
+    // === ОТПРАВКА ===
+    // 1) если открыт через кнопку слева/в профиле — используем backend (answerWebAppQuery)
+    // 2) если когда-нибудь откроешь через reply-кнопку — tg.sendData тоже будет работать
+    const BACKEND_URL = "https://YOUR-BACKEND-URL/tma/submit"; // <— ПОДСТАВЬ свой https-адрес после деплоя
 
-    tg.MainButton.onClick(() => {
+    tg.MainButton.onClick(async () => {
       const payload = {
-        event:'lead',
-        name: nameEl.value.trim(),
-        contact: contactEl.value.trim(),
-        comment: commentEl.value.trim(),
+        event: 'lead',
+        name: $name.value.trim(),
+        contact: $contact.value.trim(),
+        comment: $comment.value.trim(),
         ts: Date.now()
       };
-      send(payload);
+
+      const queryId = tg.initDataUnsafe?.query_id;
+      if (queryId) {
+        // Кнопка слева / Main App / Direct Link
+        try {
+          const r = await fetch(BACKEND_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query_id: queryId, data: payload })
+          });
+          if (!r.ok) throw new Error('HTTP '+r.status);
+          try { tg.showPopup({title:'Готово', message:'Заявка отправлена ✅'}); } catch(_) {}
+          tg.close();
+        } catch (e) {
+          try { tg.showPopup({title:'Ошибка', message:'Не удалось отправить. Попробуйте ещё раз.'}); } catch(_) {}
+        }
+      } else {
+        // Открыто через reply-кнопку (если вернешь её)
+        tg.sendData(JSON.stringify(payload));
+        try { tg.showPopup({title:'Отправлено', message:'Данные ушли боту ✅'}); } catch(_) {}
+      }
     });
   </script>
 </body>
