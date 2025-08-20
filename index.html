@@ -14,37 +14,17 @@
       color:var(--tg-theme-text-color);
       background:var(--tg-theme-bg-color);
       -webkit-text-size-adjust:100%;
-      overflow-x:hidden;
-      touch-action:manipulation;
+      overflow-x:hidden; touch-action:manipulation;
     }
-    header{
-      position:sticky;top:0;z-index:3;
-      background:#ac1f26;color:#fff;padding:14px 18px;
-      font-weight:700;font-size:clamp(18px,2.5vw,22px)
-    }
+    header{position:sticky;top:0;z-index:3;background:#ac1f26;color:#fff;padding:14px 18px;font-weight:700;font-size:clamp(18px,2.5vw,22px)}
     .container{max-width:720px;margin:0 auto;padding:16px}
     h2{margin:6px 0 8px;font-size:clamp(18px,3.5vw,24px)}
     label{display:block;margin:12px 0 6px;opacity:.9}
-    input,textarea{
-      width:100%;min-width:0;padding:12px 14px;border-radius:12px;
-      border:1px solid var(--tg-theme-hint-color);
-      background:var(--tg-theme-secondary-bg-color);
-      color:var(--tg-theme-text-color);outline:0
-    }
+    input,textarea{width:100%;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--tg-theme-hint-color);background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);outline:0}
     textarea{min-height:100px;resize:vertical}
     .hint{opacity:.7;font-size:13px;margin-top:6px}
-    .btnbar{
-      position:sticky;bottom:0;z-index:2;
-      padding:12px 16px env(safe-area-inset-bottom,0px);
-      background:linear-gradient(180deg,rgba(0,0,0,.0),rgba(0,0,0,.04)) ,
-                 var(--tg-theme-bg-color);
-      border-top:1px solid var(--tg-theme-hint-color);
-    }
-    .btn{
-      width:100%;display:inline-block;text-align:center;
-      padding:14px 16px;border-radius:14px;border:0;cursor:pointer;
-      background:#4c86e8;color:#fff;font-weight:700;font-size:16px
-    }
+    .btnbar{position:sticky;bottom:0;z-index:2;padding:12px 16px env(safe-area-inset-bottom,0px);background:linear-gradient(180deg,rgba(0,0,0,.0),rgba(0,0,0,.04)),var(--tg-theme-bg-color);border-top:1px solid var(--tg-theme-hint-color)}
+    .btn{width:100%;display:inline-block;text-align:center;padding:14px 16px;border-radius:14px;border:0;cursor:pointer;background:#4c86e8;color:#fff;font-weight:700;font-size:16px}
     .btn[disabled]{opacity:.5;cursor:not-allowed}
   </style>
 </head>
@@ -67,85 +47,6 @@
     <p class="hint">Нажмите «Отправить заявку» внизу.</p>
   </div>
 
-  <!-- Наша резервная кнопка (всегда видна) -->
+  <!-- ОДНА кнопка (наша) -->
   <div class="btnbar">
-    <button id="sendBtn" class="btn" disabled>Отправить заявку</button>
-  </div>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    // Ничего не форсим на Desktop (expand иногда крашит)
-    // if (!tg.isVersionAtLeast?.(7,0)) { try{ tg.expand(); }catch(_){} }
-
-    // Заполняем "кто"
-    const u = tg.initDataUnsafe?.user;
-    document.getElementById('who').textContent =
-      u ? `Вы: ${u.first_name} ${u.last_name||''} (@${u.username||'—'})`.trim()
-        : 'Открыто в Telegram (данные скрыты)';
-
-    // Поля
-    const $name = document.getElementById('name');
-    const $contact = document.getElementById('contact');
-    const $comment = document.getElementById('comment');
-    const $sendBtn = document.getElementById('sendBtn');
-
-    // Системная кнопка Telegram
-    tg.MainButton.setText('Отправить заявку');
-    tg.MainButton.show();           // показать
-    tg.MainButton.disable();
-
-    function canSend(){
-      return $name.value.trim().length>=2 && $contact.value.trim().length>=3;
-    }
-    function syncButtons(){
-      const ok = canSend();
-      if (ok){ tg.MainButton.enable(); $sendBtn.disabled = false; }
-      else   { tg.MainButton.disable(); $sendBtn.disabled = true; }
-    }
-    [$name,$contact,$comment].forEach(i=>i.addEventListener('input', syncButtons));
-    syncButtons();
-
-    // === Адрес бэкенда (твой Render) ===
-    const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit";
-
-    // Единая отправка (и для MainButton, и для нашей кнопки)
-    async function submitForm(){
-      if (!canSend()) return;
-
-      const payload = {
-        event:'lead',
-        name:$name.value.trim(),
-        contact:$contact.value.trim(),
-        comment:$comment.value.trim(),
-        ts:Date.now()
-      };
-
-      const queryId = tg.initDataUnsafe?.query_id; // есть при запуске из Menu/Main/Direct
-      if (!queryId){
-        // Если вдруг открыто через reply-кнопку/вне меню
-        tg.sendData(JSON.stringify(payload));
-        try{ tg.showPopup({title:'Готово', message:'Данные отправлены ✅'});}catch(_){}
-        return;
-      }
-
-      try{
-        const r = await fetch(BACKEND_URL, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ query_id: queryId, data: payload })
-        });
-        const text = await r.text().catch(()=> '');
-        if (!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,200)}`);
-        try{ tg.showPopup({title:'Готово', message:'Заявка отправлена ✅'});}catch(_){}
-        tg.close();
-      }catch(e){
-        try{ tg.showPopup({title:'Ошибка', message:String(e).slice(0,200)});}catch(_){ alert(String(e)); }
-      }
-    }
-
-    tg.MainButton.onClick(submitForm);
-    $sendBtn.addEventListener('click', submitForm);
-  </script>
-</body>
-</html>
+    <button
