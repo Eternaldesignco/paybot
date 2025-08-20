@@ -2,113 +2,39 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"/>
-  <!-- фиксируем масштаб, чтобы на мобиле не зумило -->
   <meta name="viewport"
         content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
   <meta name="format-detection" content="telephone=no,email=no,address=no"/>
   <meta name="color-scheme" content="light"/>
   <title>Яхтинг — заявка</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
   <style>
-    /* === ШРИФТЫ (из /fonts) — добавил версию в url, чтобы точно сбросить кэш === */
-    @font-face{
-      font-family:"BebasCustom";
-      src:url("./fonts/Bebas.ttf?v=2") format("truetype");
-      font-weight:400; font-style:normal; font-display:swap;
-    }
-    @font-face{
-      font-family:"RalewayCustom";
-      src:url("./fonts/Raleway-Medium.ttf?v=2") format("truetype");
-      font-weight:500; font-style:normal; font-display:swap;
-    }
+    @font-face{font-family:"BebasCustom";src:url("./fonts/Bebas.ttf?v=3") format("truetype");font-display:swap}
+    @font-face{font-family:"RalewayCustom";src:url("./fonts/Raleway-Medium.ttf?v=3") format("truetype");font-display:swap}
 
-    :root{
-      --bg:#FFFFFF;      /* фон */
-      --text:#231F20;    /* основной текст */
-      --accent:#AC1F26;  /* заголовки, рамки, кнопка */
-      --muted:#6B7280;   /* подсказки */
-      --radius:14px;
-    }
+    :root{--bg:#FFFFFF;--text:#231F20;--accent:#AC1F26;--muted:#6B7280;--radius:14px}
+    *{box-sizing:border-box}html,body{height:100%}html,body{background:#FFFFFF!important}
+    body{margin:0;font:16px/1.45 "RalewayCustom",system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden;touch-action:manipulation}
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    html,body{background:#FFFFFF!important}
+    .appbar{position:sticky;top:0;z-index:3;background:var(--accent);color:#fff;padding:14px 18px}
+    .brand{font-family:"BebasCustom";letter-spacing:.5px;font-size:28px;line-height:1}
+    .subtitle{opacity:.95;margin-top:4px;font-size:14px;font-weight:600;font-family:"RalewayCustom"}
 
-    body{
-      margin:0;
-      font:16px/1.45 "RalewayCustom", system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color:var(--text);
-      -webkit-text-size-adjust:100%;
-      text-size-adjust:100%;
-      overflow-x:hidden;
-      touch-action:manipulation;
-    }
+    .container{max-width:720px;margin:0 auto;padding:16px;background:#FFFFFF}
+    h2{margin:6px 0 8px;font-size:clamp(22px,4.5vw,32px);color:var(--accent);font-family:"BebasCustom";letter-spacing:.4px}
+    label{display:block;margin:12px 0 6px;color:var(--accent);font-weight:700;font-family:"RalewayCustom"}
+    input,textarea{width:100%;padding:12px 14px;border-radius:var(--radius);border:1px solid var(--accent);background:#FFFFFF;color:var(--text);outline:0;font-size:16px;font-family:"RalewayCustom"}
+    input::placeholder,textarea::placeholder{color:var(--muted)}textarea{min-height:110px;resize:vertical}.hint{color:var(--muted);font-size:13px;margin-top:6px}
 
-    /* Шапка */
-    .appbar{
-      position:sticky; top:0; z-index:3;
-      background:var(--accent); color:#fff;
-      padding:14px 18px;
-    }
-    .brand{
-      font-family:"BebasCustom", system-ui;
-      letter-spacing:.5px;
-      font-size:28px; line-height:1; font-weight:400;
-    }
-    .subtitle{
-      opacity:.95; margin-top:4px;
-      font-size:14px; font-weight:600;
-      font-family:"RalewayCustom", system-ui;
-    }
-
-    .container{max-width:720px; margin:0 auto; padding:16px; background:#FFFFFF}
-    h2{
-      margin:6px 0 8px;
-      font-size:clamp(22px, 4.5vw, 32px);
-      color:var(--accent);
-      font-family:"BebasCustom", system-ui;
-      letter-spacing:.4px;
-    }
-    label{
-      display:block; margin:12px 0 6px;
-      color:var(--accent); font-weight:700;
-      font-family:"RalewayCustom", system-ui;
-    }
-    input,textarea{
-      width:100%; min-width:0;
-      padding:12px 14px; border-radius:var(--radius);
-      border:1px solid var(--accent);
-      background:#FFFFFF; color:var(--text); outline:0;
-      font-size:16px; /* чтобы iOS не зумил поля */
-      font-family:"RalewayCustom", system-ui;
-    }
-    input::placeholder, textarea::placeholder{color:var(--muted)}
-    textarea{min-height:110px; resize:vertical}
-    .hint{color:var(--muted); font-size:13px; margin-top:6px}
-
-    /* ОДНА (наша) кнопка */
-    .btnbar{
-      position:sticky; bottom:0; z-index:2;
-      padding:12px 16px env(safe-area-inset-bottom,0px);
-      background:#FFFFFF;           /* белый, как и фон */
-      border-top:1px solid var(--accent);
-    }
-    .btn{
-      width:100%; display:inline-block; text-align:center;
-      padding:14px 16px; border-radius:var(--radius); border:0; cursor:pointer;
-      background:var(--accent); color:#fff; font-weight:800; font-size:16px;
-      letter-spacing:.2px; font-family:"RalewayCustom", system-ui;
-    }
-    .btn[disabled]{opacity:.45; cursor:not-allowed}
-    .btn:active{transform:translateY(1px)}
+    .btnbar{position:sticky;bottom:0;z-index:2;padding:12px 16px env(safe-area-inset-bottom,0px);background:#FFFFFF;border-top:1px solid var(--accent)}
+    .btn{width:100%;display:inline-block;text-align:center;padding:14px 16px;border-radius:var(--radius);border:0;cursor:pointer;background:var(--accent);color:#fff;font-weight:800;font-size:16px;letter-spacing:.2px;font-family:"RalewayCustom"}
+    .btn[disabled]{opacity:.45;cursor:not-allowed}.btn:active{transform:translateY(1px)}
   </style>
 </head>
 <body>
-  <!-- Шапка -->
   <header class="appbar">
-    <div class="brand">Яхтинг</div>
-    <div class="subtitle">В&nbsp;Турции, по&nbsp;Эгейскому побережью</div>
+    <div class="brand">ЯХТИНГ</div>
+    <div class="subtitle">В Турции, по Эгейскому побережью</div>
   </header>
 
   <div class="container">
@@ -127,91 +53,47 @@
     <p class="hint">Нажмите «Отправить заявку» внизу.</p>
   </div>
 
-  <!-- ОДНА кнопка -->
   <div class="btnbar">
     <button id="sendBtn" class="btn" disabled>Отправить заявку</button>
   </div>
 
   <script>
-    const tg = Telegram.WebApp;
-    tg.ready();
+    const tg = Telegram.WebApp; tg.ready();
+    try{ tg.setBackgroundColor('#ffffff'); tg.setHeaderColor('#AC1F26'); }catch(_){}
+    function hideMB(){ try{ tg.MainButton.setParams({text:"",is_visible:false,is_enabled:false}); tg.MainButton.hide(); }catch(_){}}; hideMB(); setTimeout(hideMB,150); setTimeout(hideMB,600);
 
-    /* Белый фон у контейнера Телеги, чтобы низ не был «серее» */
-    try { tg.setBackgroundColor('#ffffff'); } catch(_) {}
-    try { tg.setHeaderColor('#AC1F26'); } catch(_) {}
+    let lastTouchEnd=0;
+    document.addEventListener("touchstart",e=>{ if(e.touches.length>1) e.preventDefault() },{passive:false});
+    document.addEventListener("touchend",e=>{const n=Date.now(); if(n-lastTouchEnd<=300) e.preventDefault(); lastTouchEnd=n },{passive:false});
+    document.addEventListener("gesturestart",e=>e.preventDefault());
 
-    /* Прячем системную MainButton (чтобы не было второй) */
-    function hideMB(){
-      try{
-        tg.MainButton.offClick(()=>{});
-        tg.MainButton.setParams({text:"",is_visible:false,is_enabled:false});
-        tg.MainButton.hide();
-      }catch(_){}
-    }
-    hideMB(); setTimeout(hideMB,150); setTimeout(hideMB,600);
-    tg.onEvent?.("viewportChanged", hideMB); tg.onEvent?.("themeChanged", hideMB);
+    const u = tg.initDataUnsafe?.user; const userId = u?.id || null;
+    document.getElementById('who').textContent = u ? `Вы: ${u.first_name} ${u.last_name||''} (@${u.username||'—'})`.trim() : 'Открыто в Telegram';
 
-    /* Блокируем жесты зума (статичность на мобиле) */
-    let lastTouchEnd = 0;
-    document.addEventListener("touchstart", e => { if (e.touches.length > 1) e.preventDefault(); }, {passive:false});
-    document.addEventListener("touchend",   e => { const n=Date.now(); if (n-lastTouchEnd<=300) e.preventDefault(); lastTouchEnd=n; }, {passive:false});
-    document.addEventListener("gesturestart", e => e.preventDefault());
+    const $name=document.getElementById('name'), $contact=document.getElementById('contact'), $comment=document.getElementById('comment'), $sendBtn=document.getElementById('sendBtn');
+    const ok = ()=>{ try{ tg.showPopup({title:'Готово', message:'Заявка отправлена ✅'}); }catch(_){ alert('Заявка отправлена ✅') } }
+    const er = (m)=>{ try{ tg.showPopup({title:'Ошибка', message:m}); }catch(_){ alert(m) } }
+    const canSend = ()=> $name.value.trim().length>=2 && $contact.value.trim().length>=3;
+    [$name,$contact,$comment].forEach(i=>i.addEventListener('input',()=>{$sendBtn.disabled=!canSend()})); $sendBtn.disabled=!canSend();
 
-    // Подпись «кто вы»
-    const u = tg.initDataUnsafe?.user;
-    const userId = u?.id || null;
-    document.getElementById('who').textContent =
-      u ? `Вы: ${u.first_name} ${u.last_name||''} (@${u.username||'—'})`.trim()
-        : 'Открыто в Telegram (данные скрыты)';
-
-    // Поля
-    const $name = document.getElementById('name');
-    const $contact = document.getElementById('contact');
-    const $comment = document.getElementById('comment');
-    const $sendBtn = document.getElementById('sendBtn');
-
-    function canSend(){ return $name.value.trim().length>=2 && $contact.value.trim().length>=3; }
-    function sync(){ $sendBtn.disabled = !canSend(); }
-    [$name,$contact,$comment].forEach(i=>i.addEventListener('input', sync)); sync();
-
-    // Твой бэкенд (Render)
     const BACKEND_URL = "https://miniapp-backend-q7w0.onrender.com/tma/submit";
 
-    function ok(msg){ try{ tg.showPopup({title:'Готово', message:msg}); }catch(_){ alert(msg); } }
-    function err(msg){ try{ tg.showPopup({title:'Ошибка', message:msg}); }catch(_){ alert(msg); } }
-
     async function submitForm(){
-      if (!canSend()) return;
-
-      const payload = {
-        event:'lead',
-        name:$name.value.trim(),
-        contact:$contact.value.trim(),
-        comment:$comment.value.trim(),
-        ts:Date.now()
-      };
-
-      // ВАЖНО: теперь ВСЕГДА стучимся на бэкенд.
-      // Если есть query_id — бэкенд ответит answerWebAppQuery.
-      // Если query_id нет (Main App/кнопка слева) — бэкенд отправит тебе сообщение через sendMessage.
+      if(!canSend()) return;
+      const payload={ event:'lead', name:$name.value.trim(), contact:$contact.value.trim(), comment:$comment.value.trim(), ts:Date.now() };
       const qid = tg.initDataUnsafe?.query_id || null;
 
       try{
         const r = await fetch(BACKEND_URL,{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            query_id: qid,
-            user_id: userId,
-            data: payload
-          })
+          body: JSON.stringify({ query_id: qid, user_id: tg.initDataUnsafe?.user?.id || null, data: payload }),
+          mode: 'cors',
         });
-        const text = await r.text().catch(()=> '');
-        if(!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,200)}`);
-        ok('Заявка отправлена ✅'); tg.close();
-      }catch(e){
-        err(String(e).slice(0,200));
-      }
+        const txt = await r.text().catch(()=> '');
+        if(!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+        ok(); tg.close();
+      }catch(e){ er(String(e)) }
     }
     $sendBtn.addEventListener('click', submitForm);
   </script>
